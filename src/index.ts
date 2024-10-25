@@ -141,7 +141,7 @@ export default class WebpackEsToolkitPlugin {
                     node.source.value.match(/^lodash-es\/\w+\.js$/))
                 ) {
                   // import isEqual from 'lodash/isEqual.js';
-                  // -> import isEqual from 'es-toolkit/compat';
+                  // -> import { isEqual } from 'es-toolkit/compat';
                   // assume that there is only one specifier
                   const specifier = node.specifiers[0];
                   const singleImportFileName = node.source.value
@@ -158,9 +158,25 @@ export default class WebpackEsToolkitPlugin {
                   }
                 } else if (
                   node.type === "ImportDeclaration" &&
-                  node.source.value.match(/^lodash\/\w+$/)
+                  node.source.value.match(/^lodash\.\w+$/)
                 ) {
-                  // TODO
+                  // import isEqual from 'lodash.isequal';
+                  // get the function name
+                  const functionName = node.source.value.split(".")[1];
+                  let singleImportFileName;
+                  if (
+                    (singleImportFileName = this.supportedFunctions.find(
+                      (i) => i.toLowerCase() === functionName.toLowerCase()
+                    ))
+                  ) {
+                    // import { isEqual } from 'es-toolkit/compat';
+                    const specifier = node.specifiers[0];
+                    node.source.value = "es-toolkit/compat";
+                    node.source.raw = "'es-toolkit/compat'";
+                    specifier.type = "ImportSpecifier";
+                    specifier.imported = structuredClone(specifier.local);
+                    specifier.imported.name = singleImportFileName;
+                  }
                 }
               }
             });

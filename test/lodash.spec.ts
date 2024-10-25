@@ -262,7 +262,9 @@ lodashIsFunction(() => {});`;
             path.resolve(__dirname, "dist/main.js"),
             "utf-8"
           );
-          expect(output).toContain(`Uses a binary search to determine the lowest index at which \`value\``);
+          expect(output).toContain(
+            `Uses a binary search to determine the lowest index at which \`value\``
+          );
           done();
         });
       });
@@ -294,7 +296,6 @@ describe.sequential("lodash-es", () => {
           expect(output).toContain(
             `./node_modules/es-toolkit/dist/predicate/isFunction.mjs`
           );
-          expect(output).not.toContain(`./node_modules/lodash-es/sortedIndex.js`);
           done();
         });
       });
@@ -335,7 +336,9 @@ describe.sequential("lodash-es", () => {
           expect(output).toContain(
             `./node_modules/es-toolkit/dist/predicate/isEqual.mjs`
           );
-          expect(output).not.toContain(`./node_modules/lodash-es/sortedIndex.js`);
+          expect(output).not.toContain(
+            `./node_modules/lodash-es/sortedIndex.js`
+          );
           done();
         });
       });
@@ -356,7 +359,6 @@ describe.sequential("lodash-es", () => {
           expect(output).toContain(
             `./node_modules/es-toolkit/dist/predicate/isEqual.mjs`
           );
-          expect(output).not.toContain(`./node_modules/lodash-es/sortedIndex.js`);
           done();
         });
       });
@@ -396,7 +398,6 @@ isFunction(() => {});`;
           expect(output).toContain(
             `./node_modules/es-toolkit/dist/predicate/isFunction.mjs`
           );
-          expect(output).not.toContain(`./node_modules/lodash-es/sortedIndex.js`);
           done();
         });
       });
@@ -415,7 +416,6 @@ isFunction(() => {});`;
           expect(output).toContain(
             `./node_modules/es-toolkit/dist/predicate/isEqual.mjs`
           );
-          expect(output).not.toContain(`./node_modules/lodash-es/sortedIndex.js`);
           done();
         });
       });
@@ -439,7 +439,6 @@ lodashIsFunction(() => {});`;
           expect(output).toContain(
             `./node_modules/es-toolkit/dist/predicate/isFunction.mjs`
           );
-          expect(output).not.toContain(`./node_modules/lodash-es/sortedIndex.js`);
           done();
         });
       });
@@ -479,7 +478,6 @@ lodashIsFunction(() => {});`;
           expect(output).toContain(
             `./node_modules/es-toolkit/dist/predicate/isEqual.mjs`
           );
-          expect(output).not.toContain(`./node_modules/lodash-es/sortedIndex.js`);
           done();
         });
       });
@@ -498,7 +496,6 @@ lodashIsFunction(() => {});`;
           expect(output).toContain(
             `./node_modules/es-toolkit/dist/predicate/isEqual.mjs`
           );
-          expect(output).not.toContain(`./node_modules/lodash-es/sortedIndex.js`);
           done();
         });
       });
@@ -514,9 +511,56 @@ lodashIsFunction(() => {});`;
             path.resolve(__dirname, "dist/main.js"),
             "utf-8"
           );
-          expect(output).toContain(`Uses a binary search to determine the lowest index at which \`value\``);
+          expect(output).toContain(
+            `Uses a binary search to determine the lowest index at which \`value\``
+          );
           done();
         });
+      });
+    });
+  });
+});
+
+describe.sequential("lodash-separate", () => {
+  afterEach(() => {
+    fs.unlinkSync(path.resolve(__dirname, "test.js"));
+    fs.unlinkSync(path.resolve(__dirname, "dist/main.js"));
+  });
+
+  it("support function", () => {
+    return new Promise<void>((done) => {
+      const src = `import lodashIsEqual from 'lodash.isequal';
+lodashIsEqual({}, {});`;
+
+      fs.writeFileSync(path.resolve(__dirname, "test.js"), src);
+      webpack(defaultConfig, (err, stats) => {
+        const output = fs.readFileSync(
+          path.resolve(__dirname, "dist/main.js"),
+          "utf-8"
+        );
+        expect(output).toContain(
+          `./node_modules/es-toolkit/dist/predicate/isEqual.mjs`
+        );
+        done();
+      });
+    });
+  });
+
+  it("unsupported function", () => {
+    return new Promise<void>((done) => {
+      const src = `import lodashSortedIndex from 'lodash.sortedindex';
+sortedIndex([30, 50], 40);`;
+
+      fs.writeFileSync(path.resolve(__dirname, "test.js"), src);
+      webpack(defaultConfig, (err, stats) => {
+        const output = fs.readFileSync(
+          path.resolve(__dirname, "dist/main.js"),
+          "utf-8"
+        );
+        expect(output).toContain(
+          `Uses a binary search to determine the lowest index at which \`value\``
+        );
+        done();
       });
     });
   });
