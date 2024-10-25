@@ -13,7 +13,7 @@ const defaultConfig: any = {
   devtool: false,
   output: {
     path: path.resolve(__dirname, "dist"),
-    filename: "main.js",
+    filename: "bundle.js",
   },
 };
 
@@ -37,12 +37,12 @@ const value = ref(_.isEqual({}, {}));
 import App from './test.vue';
 
 createApp(App).mount('#app');`;
-      fs.writeFileSync(path.resolve(__dirname, "test.js"), src);
+      fs.writeFileSync(path.resolve(__dirname, "index.js"), src);
       webpack(
         {
           ...defaultConfig,
           plugins: [new VueLoaderPlugin(), new WebpackEsToolkitPlugin()],
-          entry: path.resolve(__dirname, "test.js"),
+          entry: path.resolve(__dirname, "index.js"),
           module: {
             rules: [
               {
@@ -54,7 +54,7 @@ createApp(App).mount('#app');`;
         },
         (err, stats) => {
           const output = fs.readFileSync(
-            path.resolve(__dirname, "dist/main.js"),
+            path.resolve(__dirname, "dist/bundle.js"),
             "utf-8"
           );
           expect(output).toContain(
@@ -63,9 +63,9 @@ createApp(App).mount('#app');`;
           expect(output).not.toContain(`Lodash <https://lodash.com/>`);
           done();
 
-          fs.unlinkSync(path.resolve(__dirname, "test.js"));
+          fs.unlinkSync(path.resolve(__dirname, "index.js"));
           fs.unlinkSync(path.resolve(__dirname, "test.vue"));
-          fs.unlinkSync(path.resolve(__dirname, "dist/main.js"));
+          fs.unlinkSync(path.resolve(__dirname, "dist/bundle.js"));
         }
       );
     });

@@ -41,7 +41,8 @@ export default class WebpackEsToolkitPlugin {
                 const node = ast.body[i];
                 if (
                   node.type === "ImportDeclaration" &&
-                  node.source.value === "lodash"
+                  (node.source.value === "lodash-es" ||
+                    node.source.value === "lodash")
                 ) {
                   // check if both ImportDefaultSpecifier and ImportSpecifier are present
                   let hasDefaultSpecifier = false;
@@ -119,14 +120,16 @@ export default class WebpackEsToolkitPlugin {
                           (specifier) =>
                             !this.isUnsupportedFunction(specifier.imported.name)
                         );
+                      const oldSourceValue = node.source.value;
+                      const oldSourceRaw = node.source.raw;
                       node.specifiers = supportedImportNodes;
                       node.source.value = "es-toolkit/compat";
                       node.source.raw = "'es-toolkit/compat'";
                       // add a new ImportDeclaration for the unsupported functions
                       const newImportDeclaration = structuredClone(node);
                       newImportDeclaration.specifiers = unsupportedImportNodes;
-                      newImportDeclaration.source.value = "lodash";
-                      newImportDeclaration.source.raw = "'lodash'";
+                      newImportDeclaration.source.value = oldSourceValue;
+                      newImportDeclaration.source.raw = oldSourceRaw;
                       // add the new ImportDeclaration after the current node
                       ast.body.splice(i + 1, 0, newImportDeclaration);
                       i++;
@@ -134,7 +137,8 @@ export default class WebpackEsToolkitPlugin {
                   }
                 } else if (
                   node.type === "ImportDeclaration" &&
-                  node.source.value.match(/^lodash\/\w+\.js$/)
+                  (node.source.value.match(/^lodash\/\w+\.js$/) ||
+                    node.source.value.match(/^lodash-es\/\w+\.js$/))
                 ) {
                   // import isEqual from 'lodash/isEqual.js';
                   // -> import isEqual from 'es-toolkit/compat';
@@ -154,10 +158,6 @@ export default class WebpackEsToolkitPlugin {
                   }
                 } else if (
                   node.type === "ImportDeclaration" &&
-                  node.source.value === "lodash-es"
-                ) {
-                  // TODO
-                } else if (node.type === "ImportDeclaration" &&
                   node.source.value.match(/^lodash\/\w+$/)
                 ) {
                   // TODO
