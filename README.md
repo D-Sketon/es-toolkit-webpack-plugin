@@ -1,12 +1,16 @@
-# es-toolkit-webpack-plugin
+<div align = center>
+  <h1>es-toolkit-webpack-plugin</h1>
+  <img alt="NPM License" src="https://img.shields.io/npm/l/es-toolkit-webpack-plugin">
+  <img alt="NPM Version" src="https://img.shields.io/npm/v/es-toolkit-webpack-plugin">
 
-Webpack5 plugin for replacing Lodash with es-toolkit, inspired by [vite-plugin-es-toolkit](https://github.com/wojtekmaj/vite-plugin-es-toolkit).
+  Webpack 5 plugin for replacing lodash with es-toolkit, inspired by <a href="https://github.com/wojtekmaj/vite-plugin-es-toolkit">vite-plugin-es-toolkit</a>.
+</div>
 
 ## Usage
 
 ```bash
 npm install es-toolkit
-npm install es-toolkit-webpack-plugin
+npm install es-toolkit-webpack-plugin --save-dev
 ```
 
 ```javascript

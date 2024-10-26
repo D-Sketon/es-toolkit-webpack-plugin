@@ -8,7 +8,7 @@
   },
   "author": "D-Sketon",
   "license": "MIT",
-  "description": "Webpack5 plugin for replacing Lodash with es-toolkit",
+  "description": "Webpack 5 plugin for replacing lodash with es-toolkit",
   "dependencies": {
     "es-toolkit": "^1.11.0"
   },
