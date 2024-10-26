@@ -61,11 +61,59 @@ createApp(App).mount('#app');`;
             `./node_modules/es-toolkit/dist/predicate/isEqual.mjs`
           );
           expect(output).not.toContain(`Lodash <https://lodash.com/>`);
-          done();
 
           fs.unlinkSync(path.resolve(__dirname, "index.js"));
           fs.unlinkSync(path.resolve(__dirname, "test.vue"));
           fs.unlinkSync(path.resolve(__dirname, "dist/bundle.js"));
+          done();
+        }
+      );
+    });
+  });
+
+  it("babel-loader with jsx", () => {
+    return new Promise<void>((done) => {
+      const src = `import React from 'react';
+import ReactDOM from 'react-dom';
+import _ from 'lodash';
+
+const App = () => {
+  const [value, setValue] = React.useState(_.isEqual({}, {}));
+  return <div>{value.toString()}</div>;
+};
+
+ReactDOM.render(<App />, document.getElementById('app'));`;
+
+      fs.writeFileSync(path.resolve(__dirname, "index.jsx"), src);
+      webpack(
+        {
+          ...defaultConfig,
+          plugins: [new WebpackEsToolkitPlugin()],
+          entry: path.resolve(__dirname, "index.jsx"),
+          module: {
+            rules: [
+              {
+                test: /\.jsx$/,
+                loader: "babel-loader",
+                options: {
+                  presets: ["@babel/preset-react"],
+                },
+              },
+            ],
+          },
+        },
+        (err, stats) => {
+          const output = fs.readFileSync(
+            path.resolve(__dirname, "dist/bundle.js"),
+            "utf-8"
+          );
+          expect(output).toContain(
+            `./node_modules/es-toolkit/dist/predicate/isEqual.mjs`
+          );
+          expect(output).not.toContain(`Lodash <https://lodash.com/>`);
+          fs.unlinkSync(path.resolve(__dirname, "index.jsx"));
+          fs.unlinkSync(path.resolve(__dirname, "dist/bundle.js"));
+          done();
         }
       );
     });

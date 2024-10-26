@@ -3,6 +3,7 @@
     "outDir": "./dist",
     "module": "commonjs",
     "target": "esnext",
+    "declaration": true,
     "moduleResolution": "node",
     "strict": true,
     "types": ["node"],
