@@ -1,5 +1,5 @@
 import * as esToolkitCompat from "es-toolkit/compat";
-import { Compiler } from "webpack";
+import type { Compiler } from "webpack";
 import type { Identifier, ImportDeclaration, ImportSpecifier } from "acorn";
 
 export default class WebpackEsToolkitPlugin {
@@ -32,7 +32,7 @@ export default class WebpackEsToolkitPlugin {
         normalModuleFactory.hooks.parser
           .for("javascript/auto")
           .tap("ModifyImportsWebpackPlugin", (parser) => {
-            parser.hooks.program.tap("MyPlugin", (ast) => {
+            parser.hooks.program.tap("MyPlugin", (ast: any) => {
               const originalSource: string = parser.state?.module
                 .originalSource()
                 ?.source()
