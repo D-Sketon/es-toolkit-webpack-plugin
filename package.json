@@ -6,6 +6,14 @@
     "test": "vitest",
     "build": "tsc"
   },
+  "homepage": "https://github.com/D-Sketon/es-toolkit-webpack-plugin#readme",
+  "bugs": {
+    "url": "https://github.com/D-Sketon/es-toolkit-webpack-plugin/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/D-Sketon/es-toolkit-webpack-plugin.git"
+  },
   "author": "D-Sketon",
   "license": "MIT",
   "description": "Webpack 5 plugin for replacing lodash with es-toolkit",

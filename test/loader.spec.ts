@@ -52,7 +52,7 @@ createApp(App).mount('#app');`;
             ],
           },
         },
-        (err, stats) => {
+        () => {
           const output = fs.readFileSync(
             path.resolve(__dirname, "dist/bundle.js"),
             "utf-8"
@@ -102,7 +102,7 @@ ReactDOM.render(<App />, document.getElementById('app'));`;
             ],
           },
         },
-        (err, stats) => {
+        () => {
           const output = fs.readFileSync(
             path.resolve(__dirname, "dist/bundle.js"),
             "utf-8"
