@@ -29,6 +29,8 @@ import { debounce, isEqual } from "lodash"; // supported
 import { debounce as _debounce } from "lodash"; // supported
 import lodashIsEqual from "lodash/isEqual.js"; // supported
 import _, { debounce, isEqual } from "lodash"; // supported
+const _ = require("lodash"); // supported
+const isEqual = require("lodash/isEqual.js"); // unsupported
 
 // lodash-es
 import _ from "lodash-es"; // supported
@@ -36,9 +38,12 @@ import { debounce, isEqual } from "lodash-es"; // supported
 import { debounce as _debounce } from "lodash-es"; // supported
 import lodashIsEqual from "lodash-es/isEqual.js"; // supported
 import _, { debounce, isEqual } from "lodash-es"; // supported
+const _ = require("lodash-es"); // supported
+const isEqual = require("lodash-es/isEqual.js"); // unsupported
 
 // lodash.*
 import lodashIsEqual from "lodash.isequal"; // supported
+const lodashIsEqual = require("lodash.isequal"); // unsupported
 ```
 
 ## License

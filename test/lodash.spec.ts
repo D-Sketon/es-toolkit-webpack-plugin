@@ -364,6 +364,44 @@ sortedIndex([30, 50], 40);`;
       });
     });
   });
+
+  describe("require", () => {
+    it("should replace require from lodash with named import from es-toolkit/compat", () => {
+      return new Promise<void>((done) => {
+        const src = `const _ = require('lodash');
+_.isEqual({}, {});`;
+
+        fs.writeFileSync(path.resolve(__dirname, "test.js"), src);
+        webpack(defaultConfig, (err, stats) => {
+          const output = fs.readFileSync(
+            path.resolve(__dirname, "dist/main.js"),
+            "utf-8"
+          );
+          expect(output).toContain(`function isEqual(a, b) {`);
+          expect(output).toContain(`return isEqualWith(a, b, noop.noop);`);
+          expect(output).not.toContain(`Lodash <https://lodash.com/>`);
+          done();
+        });
+      });
+    });
+
+    it("should keep require from lodash if an unsupported function is imported", () => {
+      return new Promise<void>((done) => {
+        const src = `const _ = require('lodash');
+_.sortedIndex([30, 50], 40);`;
+
+        fs.writeFileSync(path.resolve(__dirname, "test.js"), src);
+        webpack(defaultConfig, (err, stats) => {
+          const output = fs.readFileSync(
+            path.resolve(__dirname, "dist/main.js"),
+            "utf-8"
+          );
+          expect(output).toContain(`Lodash <https://lodash.com/>`);
+          done();
+        });
+      });
+    });
+  });
 });
 
 describe.sequential("lodash-es", () => {
@@ -637,73 +675,110 @@ isEqual({}, {});`;
         });
       });
     });
-  });
-
-  it("should replace default and renamed named import from lodash-es with named import from es-toolkit/compat", () => {
-    return new Promise<void>((done) => {
-      const src = `import _, { isEqual as lodashIsEqual } from 'lodash-es';
+    it("should replace default and renamed named import from lodash-es with named import from es-toolkit/compat", () => {
+      return new Promise<void>((done) => {
+        const src = `import _, { isEqual as lodashIsEqual } from 'lodash-es';
 _.isFunction(() => {});
 lodashIsEqual({}, {});`;
 
-      fs.writeFileSync(path.resolve(__dirname, "test.js"), src);
-      webpack(defaultConfig, (err, stats) => {
-        const output = fs.readFileSync(
-          path.resolve(__dirname, "dist/main.js"),
-          "utf-8"
-        );
-        expect(output).toContain(
-          `./node_modules/es-toolkit/dist/predicate/isFunction.mjs`
-        );
-        expect(output).toContain(
-          `./node_modules/es-toolkit/dist/predicate/isEqual.mjs`
-        );
-        done();
+        fs.writeFileSync(path.resolve(__dirname, "test.js"), src);
+        webpack(defaultConfig, (err, stats) => {
+          const output = fs.readFileSync(
+            path.resolve(__dirname, "dist/main.js"),
+            "utf-8"
+          );
+          expect(output).toContain(
+            `./node_modules/es-toolkit/dist/predicate/isFunction.mjs`
+          );
+          expect(output).toContain(
+            `./node_modules/es-toolkit/dist/predicate/isEqual.mjs`
+          );
+          done();
+        });
       });
     });
-  });
 
-  it("should keep unsupported default and named imports from lodash-es", () => {
-    return new Promise<void>((done) => {
-      const src = `import _, { sortedIndex } from 'lodash-es';
+    it("should keep unsupported default and named imports from lodash-es", () => {
+      return new Promise<void>((done) => {
+        const src = `import _, { sortedIndex } from 'lodash-es';
 _.isFunction(() => {});
 sortedIndex([30, 50], 40);`;
 
-      fs.writeFileSync(path.resolve(__dirname, "test.js"), src);
-      webpack(defaultConfig, (err, stats) => {
-        const output = fs.readFileSync(
-          path.resolve(__dirname, "dist/main.js"),
-          "utf-8"
-        );
-        expect(output).toContain(
-          `./node_modules/es-toolkit/dist/predicate/isFunction.mjs`
-        );
-        expect(output).toContain(`./node_modules/lodash-es/sortedIndex.js`);
-        done();
+        fs.writeFileSync(path.resolve(__dirname, "test.js"), src);
+        webpack(defaultConfig, (err, stats) => {
+          const output = fs.readFileSync(
+            path.resolve(__dirname, "dist/main.js"),
+            "utf-8"
+          );
+          expect(output).toContain(
+            `./node_modules/es-toolkit/dist/predicate/isFunction.mjs`
+          );
+          expect(output).toContain(`./node_modules/lodash-es/sortedIndex.js`);
+          done();
+        });
       });
     });
-  });
 
-  it("should replace default and named import from lodash-es with named import from es-toolkit/compat and keep unsupported named imports from lodash-es", () => {
-    return new Promise<void>((done) => {
-      const src = `import _, { sortedIndex, isEqual } from 'lodash-es';
+    it("should replace default and named import from lodash-es with named import from es-toolkit/compat and keep unsupported named imports from lodash-es", () => {
+      return new Promise<void>((done) => {
+        const src = `import _, { sortedIndex, isEqual } from 'lodash-es';
 _.isFunction(() => {});
 isEqual({}, {});
 sortedIndex([30, 50], 40);`;
 
-      fs.writeFileSync(path.resolve(__dirname, "test.js"), src);
-      webpack(defaultConfig, (err, stats) => {
-        const output = fs.readFileSync(
-          path.resolve(__dirname, "dist/main.js"),
-          "utf-8"
-        );
-        expect(output).toContain(
-          `./node_modules/es-toolkit/dist/predicate/isFunction.mjs`
-        );
-        expect(output).toContain(
-          `./node_modules/es-toolkit/dist/predicate/isEqual.mjs`
-        );
-        expect(output).toContain(`./node_modules/lodash-es/sortedIndex.js`);
-        done();
+        fs.writeFileSync(path.resolve(__dirname, "test.js"), src);
+        webpack(defaultConfig, (err, stats) => {
+          const output = fs.readFileSync(
+            path.resolve(__dirname, "dist/main.js"),
+            "utf-8"
+          );
+          expect(output).toContain(
+            `./node_modules/es-toolkit/dist/predicate/isFunction.mjs`
+          );
+          expect(output).toContain(
+            `./node_modules/es-toolkit/dist/predicate/isEqual.mjs`
+          );
+          expect(output).toContain(`./node_modules/lodash-es/sortedIndex.js`);
+          done();
+        });
+      });
+    });
+  });
+
+  describe("require", () => {
+    it("should replace require from lodash-es with named import from es-toolkit/compat", () => {
+      return new Promise<void>((done) => {
+        const src = `const _ = require('lodash-es');
+_.isEqual({}, {});`;
+
+        fs.writeFileSync(path.resolve(__dirname, "test.js"), src);
+        webpack(defaultConfig, (err, stats) => {
+          const output = fs.readFileSync(
+            path.resolve(__dirname, "dist/main.js"),
+            "utf-8"
+          );
+          expect(output).toContain(`function isEqual(a, b) {`);
+          expect(output).toContain(`return isEqualWith(a, b, noop.noop);`);
+          expect(output).not.toContain(`Lodash <https://lodash.com/>`);
+          done();
+        });
+      });
+    });
+
+    it("should keep require from lodash-es if an unsupported function is imported", () => {
+      return new Promise<void>((done) => {
+        const src = `const _ = require('lodash-es');
+_.sortedIndex([30, 50], 40);`;
+
+        fs.writeFileSync(path.resolve(__dirname, "test.js"), src);
+        webpack(defaultConfig, (err, stats) => {
+          const output = fs.readFileSync(
+            path.resolve(__dirname, "dist/main.js"),
+            "utf-8"
+          );
+          expect(output).toContain(`lodash_es_sortedIndex`);
+          done();
+        });
       });
     });
   });
