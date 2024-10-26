@@ -1,5 +1,6 @@
 import * as esToolkitCompat from "es-toolkit/compat";
 import { Compiler } from "webpack";
+import type { Identifier, ImportDeclaration, ImportSpecifier } from "acorn";
 
 export default class WebpackEsToolkitPlugin {
   supportedFunctions: string[];
@@ -32,13 +33,17 @@ export default class WebpackEsToolkitPlugin {
           .for("javascript/auto")
           .tap("ModifyImportsWebpackPlugin", (parser) => {
             parser.hooks.program.tap("MyPlugin", (ast) => {
-              const originalSource = parser.state?.module
+              const originalSource: string = parser.state?.module
                 .originalSource()
                 ?.source()
                 .toString();
 
+              if (!originalSource) {
+                return;
+              }
+
               for (let i = 0; i < ast.body.length; i++) {
-                const node = ast.body[i];
+                const node: ImportDeclaration = ast.body[i];
                 if (
                   node.type === "ImportDeclaration" &&
                   (node.source.value === "lodash-es" ||
@@ -58,11 +63,20 @@ export default class WebpackEsToolkitPlugin {
                     }
                   });
                   // if both are present, then we need to separate them
-                  // TODO this will be implemented in the next version
-                  // currently, we are assuming that there is only one specifier
-                  // which means import _, { isEqual } from 'lodash'; will not work
                   if (hasDefaultSpecifier && hasImportSpecifier) {
-                    return;
+                    const clonedNode = esToolkitCompat.cloneDeep(node);
+                    // remove the ImportDefaultSpecifier from node
+                    node.specifiers = node.specifiers.filter(
+                      (specifier) => specifier.type !== "ImportDefaultSpecifier"
+                    );
+                    // remove the ImportSpecifier from clonedNode
+                    clonedNode.specifiers = clonedNode.specifiers.filter(
+                      (specifier) => specifier.type !== "ImportSpecifier"
+                    );
+                    // add the clonedNode after the current node
+                    ast.body.splice(i + 1, 0, clonedNode);
+                    i--;
+                    continue;
                   }
 
                   if (hasDefaultSpecifier) {
@@ -99,10 +113,13 @@ export default class WebpackEsToolkitPlugin {
                     node.specifiers[0].type = "ImportNamespaceSpecifier";
                   } else if (hasImportSpecifier) {
                     // import { isEqual, isEqualWith } from 'lodash';
-                    const unsupportedImportNodes: any[] =
-                      node.specifiers.filter((specifier) =>
-                        this.isUnsupportedFunction(specifier.imported.name)
-                      );
+                    const unsupportedImportNodes = (
+                      node.specifiers as ImportSpecifier[]
+                    ).filter((specifier) =>
+                      this.isUnsupportedFunction(
+                        (specifier.imported as Identifier).name
+                      )
+                    );
                     if (unsupportedImportNodes.length === 0) {
                       // all functions are supported
                       // import { isEqual, isEqualWith } from 'es-toolkit/compat';
@@ -115,18 +132,22 @@ export default class WebpackEsToolkitPlugin {
                       // do nothing
                     } else {
                       // we need to separate the supported and unsupported functions
-                      const supportedImportNodes: any[] =
-                        node.specifiers.filter(
-                          (specifier) =>
-                            !this.isUnsupportedFunction(specifier.imported.name)
-                        );
+                      const supportedImportNodes = (
+                        node.specifiers as ImportSpecifier[]
+                      ).filter(
+                        (specifier) =>
+                          !this.isUnsupportedFunction(
+                            (specifier.imported as Identifier).name
+                          )
+                      );
                       const oldSourceValue = node.source.value;
                       const oldSourceRaw = node.source.raw;
                       node.specifiers = supportedImportNodes;
                       node.source.value = "es-toolkit/compat";
                       node.source.raw = "'es-toolkit/compat'";
                       // add a new ImportDeclaration for the unsupported functions
-                      const newImportDeclaration = structuredClone(node);
+                      const newImportDeclaration =
+                        esToolkitCompat.cloneDeep(node);
                       newImportDeclaration.specifiers = unsupportedImportNodes;
                       newImportDeclaration.source.value = oldSourceValue;
                       newImportDeclaration.source.raw = oldSourceRaw;
@@ -137,13 +158,14 @@ export default class WebpackEsToolkitPlugin {
                   }
                 } else if (
                   node.type === "ImportDeclaration" &&
+                  typeof node.source.value === "string" &&
                   (node.source.value.match(/^lodash\/\w+\.js$/) ||
                     node.source.value.match(/^lodash-es\/\w+\.js$/))
                 ) {
                   // import isEqual from 'lodash/isEqual.js';
                   // -> import { isEqual } from 'es-toolkit/compat';
                   // assume that there is only one specifier
-                  const specifier = node.specifiers[0];
+                  const specifier = node.specifiers[0] as ImportSpecifier;
                   const singleImportFileName = node.source.value
                     .split("/")[1]
                     .split(".")[0];
@@ -153,28 +175,33 @@ export default class WebpackEsToolkitPlugin {
                     node.source.value = "es-toolkit/compat";
                     node.source.raw = "'es-toolkit/compat'";
                     specifier.type = "ImportSpecifier";
-                    specifier.imported = structuredClone(specifier.local);
+                    specifier.imported = esToolkitCompat.cloneDeep(
+                      specifier.local
+                    );
                     specifier.imported.name = singleImportFileName;
                   }
                 } else if (
                   node.type === "ImportDeclaration" &&
+                  typeof node.source.value === "string" &&
                   node.source.value.match(/^lodash\.\w+$/)
                 ) {
                   // import isEqual from 'lodash.isequal';
                   // get the function name
                   const functionName = node.source.value.split(".")[1];
-                  let singleImportFileName;
+                  let singleImportFileName: string | undefined;
                   if (
                     (singleImportFileName = this.supportedFunctions.find(
                       (i) => i.toLowerCase() === functionName.toLowerCase()
                     ))
                   ) {
                     // import { isEqual } from 'es-toolkit/compat';
-                    const specifier = node.specifiers[0];
+                    const specifier = node.specifiers[0] as ImportSpecifier;
                     node.source.value = "es-toolkit/compat";
                     node.source.raw = "'es-toolkit/compat'";
                     specifier.type = "ImportSpecifier";
-                    specifier.imported = structuredClone(specifier.local);
+                    specifier.imported = esToolkitCompat.cloneDeep(
+                      specifier.local
+                    );
                     specifier.imported.name = singleImportFileName;
                   }
                 }

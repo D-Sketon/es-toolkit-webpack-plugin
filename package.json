@@ -8,8 +8,11 @@
   "author": "D-Sketon",
   "license": "MIT",
   "description": "Webpack5 plugin for replacing Lodash with es-toolkit",
+  "dependencies": {
+    "es-toolkit": "^1.26.1"
+  },
   "devDependencies": {
-    "es-toolkit": "^1.25.2",
+    "acron": "^1.0.6",
     "lodash": "^4.17.21",
     "lodash-es": "^4.17.21",
     "lodash.sortedindex": "^4.1.0",

@@ -270,6 +270,100 @@ lodashIsFunction(() => {});`;
       });
     });
   });
+
+  describe("default and named import", () => {
+    it("should replace default and named import from lodash with named import from es-toolkit/compat", () => {
+      return new Promise<void>((done) => {
+        const src = `import _, { isEqual } from 'lodash';
+_.isFunction(() => {});
+isEqual({}, {});`;
+
+        fs.writeFileSync(path.resolve(__dirname, "test.js"), src);
+        webpack(defaultConfig, (err, stats) => {
+          const output = fs.readFileSync(
+            path.resolve(__dirname, "dist/main.js"),
+            "utf-8"
+          );
+          expect(output).toContain(
+            `./node_modules/es-toolkit/dist/predicate/isFunction.mjs`
+          );
+          expect(output).toContain(
+            `./node_modules/es-toolkit/dist/predicate/isEqual.mjs`
+          );
+          done();
+        });
+      });
+    });
+
+    it("should replace default and renamed named import from lodash with named import from es-toolkit/compat", () => {
+      return new Promise<void>((done) => {
+        const src = `import _, { isEqual as lodashIsEqual } from 'lodash';
+_.isFunction(() => {});
+lodashIsEqual({}, {});`;
+
+        fs.writeFileSync(path.resolve(__dirname, "test.js"), src);
+        webpack(defaultConfig, (err, stats) => {
+          const output = fs.readFileSync(
+            path.resolve(__dirname, "dist/main.js"),
+            "utf-8"
+          );
+          expect(output).toContain(
+            `./node_modules/es-toolkit/dist/predicate/isFunction.mjs`
+          );
+          expect(output).toContain(
+            `./node_modules/es-toolkit/dist/predicate/isEqual.mjs`
+          );
+          done();
+        });
+      });
+    });
+
+    it("should keep unsupported default and named imports from lodash", () => {
+      return new Promise<void>((done) => {
+        const src = `import _, { sortedIndex } from 'lodash';
+_.isFunction(() => {});
+sortedIndex([30, 50], 40);`;
+
+        fs.writeFileSync(path.resolve(__dirname, "test.js"), src);
+        webpack(defaultConfig, (err, stats) => {
+          const output = fs.readFileSync(
+            path.resolve(__dirname, "dist/main.js"),
+            "utf-8"
+          );
+          expect(output).toContain(
+            `./node_modules/es-toolkit/dist/predicate/isFunction.mjs`
+          );
+          expect(output).toContain(`Lodash <https://lodash.com/>`);
+          done();
+        });
+      });
+    });
+
+    it("should replace default and named import from lodash with named import from es-toolkit/compat and keep unsupported named imports from lodash", () => {
+      return new Promise<void>((done) => {
+        const src = `import _, { sortedIndex, isEqual } from 'lodash';
+_.isFunction(() => {});
+isEqual({}, {});
+sortedIndex([30, 50], 40);`;
+
+        fs.writeFileSync(path.resolve(__dirname, "test.js"), src);
+        webpack(defaultConfig, (err, stats) => {
+          const output = fs.readFileSync(
+            path.resolve(__dirname, "dist/main.js"),
+            "utf-8"
+          );
+          expect(output).toContain(
+            `./node_modules/es-toolkit/dist/predicate/isFunction.mjs`
+          );
+          expect(output).toContain(
+            `./node_modules/es-toolkit/dist/predicate/isEqual.mjs`
+          );
+          expect(output).toContain(`Lodash <https://lodash.com/>`);
+          done();
+        });
+      });
+    });
+  });
 });
 
 describe.sequential("lodash-es", () => {
@@ -516,6 +610,100 @@ lodashIsFunction(() => {});`;
           );
           done();
         });
+      });
+    });
+  });
+
+  describe("default and named import", () => {
+    it("should replace default and named import from lodash-es with named import from es-toolkit/compat", () => {
+      return new Promise<void>((done) => {
+        const src = `import _, { isEqual } from 'lodash-es';
+_.isFunction(() => {});
+isEqual({}, {});`;
+
+        fs.writeFileSync(path.resolve(__dirname, "test.js"), src);
+        webpack(defaultConfig, (err, stats) => {
+          const output = fs.readFileSync(
+            path.resolve(__dirname, "dist/main.js"),
+            "utf-8"
+          );
+          expect(output).toContain(
+            `./node_modules/es-toolkit/dist/predicate/isFunction.mjs`
+          );
+          expect(output).toContain(
+            `./node_modules/es-toolkit/dist/predicate/isEqual.mjs`
+          );
+          done();
+        });
+      });
+    });
+  });
+
+  it("should replace default and renamed named import from lodash-es with named import from es-toolkit/compat", () => {
+    return new Promise<void>((done) => {
+      const src = `import _, { isEqual as lodashIsEqual } from 'lodash-es';
+_.isFunction(() => {});
+lodashIsEqual({}, {});`;
+
+      fs.writeFileSync(path.resolve(__dirname, "test.js"), src);
+      webpack(defaultConfig, (err, stats) => {
+        const output = fs.readFileSync(
+          path.resolve(__dirname, "dist/main.js"),
+          "utf-8"
+        );
+        expect(output).toContain(
+          `./node_modules/es-toolkit/dist/predicate/isFunction.mjs`
+        );
+        expect(output).toContain(
+          `./node_modules/es-toolkit/dist/predicate/isEqual.mjs`
+        );
+        done();
+      });
+    });
+  });
+
+  it("should keep unsupported default and named imports from lodash-es", () => {
+    return new Promise<void>((done) => {
+      const src = `import _, { sortedIndex } from 'lodash-es';
+_.isFunction(() => {});
+sortedIndex([30, 50], 40);`;
+
+      fs.writeFileSync(path.resolve(__dirname, "test.js"), src);
+      webpack(defaultConfig, (err, stats) => {
+        const output = fs.readFileSync(
+          path.resolve(__dirname, "dist/main.js"),
+          "utf-8"
+        );
+        expect(output).toContain(
+          `./node_modules/es-toolkit/dist/predicate/isFunction.mjs`
+        );
+        expect(output).toContain(`./node_modules/lodash-es/sortedIndex.js`);
+        done();
+      });
+    });
+  });
+
+  it("should replace default and named import from lodash-es with named import from es-toolkit/compat and keep unsupported named imports from lodash-es", () => {
+    return new Promise<void>((done) => {
+      const src = `import _, { sortedIndex, isEqual } from 'lodash-es';
+_.isFunction(() => {});
+isEqual({}, {});
+sortedIndex([30, 50], 40);`;
+
+      fs.writeFileSync(path.resolve(__dirname, "test.js"), src);
+      webpack(defaultConfig, (err, stats) => {
+        const output = fs.readFileSync(
+          path.resolve(__dirname, "dist/main.js"),
+          "utf-8"
+        );
+        expect(output).toContain(
+          `./node_modules/es-toolkit/dist/predicate/isFunction.mjs`
+        );
+        expect(output).toContain(
+          `./node_modules/es-toolkit/dist/predicate/isEqual.mjs`
+        );
+        expect(output).toContain(`./node_modules/lodash-es/sortedIndex.js`);
+        done();
       });
     });
   });
