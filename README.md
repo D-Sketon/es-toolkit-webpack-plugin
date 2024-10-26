@@ -15,11 +15,11 @@ npm install es-toolkit-webpack-plugin --save-dev
 
 ```javascript
 // webpack.config.js
-import WebpackEsToolkitPlugin from "es-toolkit-webpack-plugin";
+const WebpackEsToolkitPlugin = require("es-toolkit-webpack-plugin");
 
 module.exports = {
   // ...
-  plugins: [new WebpackEsToolkitPlugin()],
+  plugins: [new WebpackEsToolkitPlugin.default()],
   // ...
 };
 ```
