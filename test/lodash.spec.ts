@@ -28,7 +28,7 @@ const webpackBuilder = (
   done: (value: void | PromiseLike<void>) => void
 ) => {
   fs.writeFileSync(ENTRY, src);
-  webpack(defaultConfig, (err, stats) => {
+  webpack(defaultConfig, () => {
     const output = fs.readFileSync(OUTPUT, "utf-8");
     contains.forEach((c) => expect(output).toContain(c));
     notContains.forEach((c) => expect(output).not.toContain(c));
@@ -276,21 +276,29 @@ describe.sequential("lodash", () => {
       });
     });
 
-    // it("should keep require from lodash if an unsupported function is imported", () => {
-    //   return new Promise<void>((done) => {
-    //     const src = `const _ = require('es-toolkit/compat').isEqual;_.sortedIndex([30, 50], 40);`;
+    it("should replace require lodash/*.js from lodash with named import from es-toolkit/compat", () => {
+      return new Promise<void>((done) => {
+        webpackBuilder(
+          `const isEqual = require('lodash/isEqual.js');isEqual({}, {});`,
+          [`function isEqual(a, b) {`, `return isEqualWith(a, b, noop.noop);`],
+          ["Lodash <https://lodash.com/>"],
+          done
+        );
+      });
+    });
 
-    //     fs.writeFileSync(path.resolve(__dirname, "test.js"), src);
-    //     webpack(defaultConfig, (err, stats) => {
-    //       const output = fs.readFileSync(
-    //         path.resolve(__dirname, "dist/main.js"),
-    //         "utf-8"
-    //       );
-    //       // expect(output).toContain(`Lodash <https://lodash.com/>`);
-    //       done();
-    //     });
-    //   });
-    // });
+    it("should keep require lodash/*.js from lodash if an unsupported function is imported", () => {
+      return new Promise<void>((done) => {
+        webpackBuilder(
+          `const sortedIndex = require('lodash/sortedIndex.js');sortedIndex([30, 50], 40);`,
+          [
+            "Uses a binary search to determine the lowest index at which `value`",
+          ],
+          [],
+          done
+        );
+      });
+    });
   });
 });
 
@@ -532,6 +540,30 @@ describe.sequential("lodash-es", () => {
         );
       });
     });
+
+    it("should replace require lodash-es/*.js from lodash with named import from es-toolkit/compat", () => {
+      return new Promise<void>((done) => {
+        webpackBuilder(
+          `const isEqual = require('lodash-es/isEqual.js');isEqual({}, {});`,
+          [`function isEqual(a, b) {`, `return isEqualWith(a, b, noop.noop);`],
+          ["Lodash <https://lodash.com/>"],
+          done
+        );
+      });
+    });
+
+    it("should keep require lodash-es/*.js from lodash if an unsupported function is imported", () => {
+      return new Promise<void>((done) => {
+        webpackBuilder(
+          `const sortedIndex = require('lodash-es/sortedIndex.js');sortedIndex([30, 50], 40);`,
+          [
+            "Uses a binary search to determine the lowest index at which `value`",
+          ],
+          [],
+          done
+        );
+      });
+    });
   });
 });
 
@@ -556,6 +588,28 @@ describe.sequential("lodash-separate", () => {
     return new Promise<void>((done) => {
       webpackBuilder(
         `import lodashSortedIndex from 'lodash.sortedindex';sortedIndex([30, 50], 40);`,
+        ["Uses a binary search to determine the lowest index at which `value`"],
+        [],
+        done
+      );
+    });
+  });
+
+  it("should replace require from lodash with named import from es-toolkit/compat", () => {
+    return new Promise<void>((done) => {
+      webpackBuilder(
+        `const lodashIsEqual = require('lodash.isequal');lodashIsEqual({}, {});`,
+        [`function isEqual(a, b) {`, `return isEqualWith(a, b, noop.noop);`],
+        [`Lodash <https://lodash.com/>`],
+        done
+      );
+    });
+  });
+
+  it("should keep require from lodash if an unsupported function is imported", () => {
+    return new Promise<void>((done) => {
+      webpackBuilder(
+        `const lodashSortedIndex = require('lodash.sortedindex');sortedIndex([30, 50], 40);`,
         ["Uses a binary search to determine the lowest index at which `value`"],
         [],
         done
