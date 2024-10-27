@@ -15,6 +15,12 @@
     "type": "git",
     "url": "git+https://github.com/D-Sketon/es-toolkit-webpack-plugin.git"
   },
+  "keywords": [
+    "webpack",
+    "plugin",
+    "lodash",
+    "es-toolkit"
+  ],
   "author": "D-Sketon",
   "license": "MIT",
   "description": "Webpack 5 plugin for replacing lodash with es-toolkit",
