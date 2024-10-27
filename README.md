@@ -21,11 +21,24 @@ npm install es-toolkit-webpack-plugin --save-dev
 const WebpackEsToolkitPlugin = require("es-toolkit-webpack-plugin");
 
 module.exports = {
-  // ...
-  plugins: [new WebpackEsToolkitPlugin.default()],
-  // ...
+  plugins: [new WebpackEsToolkitPlugin.default({
+    excludes: ["isEqual"],
+  })],
+};
+
+
+// webpack.config.mjs
+import WebpackEsToolkitPlugin from "es-toolkit-webpack-plugin";
+export default {
+  plugins: [new WebpackEsToolkitPlugin({
+    excludes: ["isEqual"],
+  })],
 };
 ```
+
+### Options (Optional)
+
+- `excludes`: An array of lodash methods that should not be replaced. Default: `[]`.
 
 ### Supported situations
 

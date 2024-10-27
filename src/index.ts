@@ -14,11 +14,23 @@ const lodashSinglePattern = /^lodash\/\w+\.js$/;
 const lodashEsSinglePattern = /^lodash-es\/\w+\.js$/;
 const lodashDotSinglePattern = /^lodash\.\w+$/;
 
+export interface WebpackEsToolkitPluginOptions {
+  excludes?: string[];
+}
+
 export default class WebpackEsToolkitPlugin {
   supportedFunctions: string[];
+  excludes: string[];
 
-  constructor() {
+  constructor(options: WebpackEsToolkitPluginOptions = {}) {
+    this.excludes = options.excludes || [];
     this.supportedFunctions = Object.keys(esToolkitCompat);
+    this.excludes.forEach((fn) => {
+      const index = this.supportedFunctions.indexOf(fn);
+      if (index !== -1) {
+        this.supportedFunctions.splice(index, 1);
+      }
+    });
   }
 
   isSupportedFunction(name: string): boolean {

@@ -25,10 +25,11 @@ const webpackBuilder = (
   src: string,
   contains: string[],
   notContains: string[],
-  done: (value: void | PromiseLike<void>) => void
+  done: (value: void | PromiseLike<void>) => void,
+  options?: any
 ) => {
   fs.writeFileSync(ENTRY, src);
-  webpack(defaultConfig, () => {
+  webpack({ ...defaultConfig, ...options }, () => {
     const output = fs.readFileSync(OUTPUT, "utf-8");
     contains.forEach((c) => expect(output).toContain(c));
     notContains.forEach((c) => expect(output).not.toContain(c));
@@ -613,6 +614,27 @@ describe.sequential("lodash-separate", () => {
         ["Uses a binary search to determine the lowest index at which `value`"],
         [],
         done
+      );
+    });
+  });
+});
+
+describe.sequential("options", () => {
+  afterEach(() => {
+    fs.unlinkSync(ENTRY);
+    fs.unlinkSync(OUTPUT);
+  });
+
+  it('should exclude functions from "excludes" option', () => {
+    return new Promise<void>((done) => {
+      webpackBuilder(
+        `import { isEqual, isFunction } from 'lodash';isEqual({}, {});isFunction(() => {});`,
+        ["/node_modules/es-toolkit/dist/predicate/isEqual.mjs"],
+        ["/node_modules/es-toolkit/dist/predicate/isFunction.mjs"],
+        done,
+        {
+          plugins: [new WebpackEsToolkitPlugin({ excludes: ["isFunction"] })],
+        }
       );
     });
   });
