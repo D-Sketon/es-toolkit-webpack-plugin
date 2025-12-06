@@ -7,6 +7,34 @@ import WebpackEsToolkitPlugin from "../src";
 const ENTRY = path.resolve(__dirname, "test.js");
 const OUTPUT = path.resolve(__dirname, "dist/main.js");
 
+// 检�?es-toolkit 版本
+function getEsToolkitVersion(): string {
+  try {
+    const pkgPath = require.resolve('es-toolkit/package.json');
+    const pkg = require(pkgPath);
+    return pkg.version;
+  } catch {
+    return '0.0.0';
+  }
+}
+
+function compareVersion(version: string, target: string): number {
+  const v1 = version.split('.').map(Number);
+  const v2 = target.split('.').map(Number);
+  for (let i = 0; i < 3; i++) {
+    if (v1[i] > v2[i]) return 1;
+    if (v1[i] < v2[i]) return -1;
+  }
+  return 0;
+}
+
+const esToolkitVersion = getEsToolkitVersion();
+const supportsCompatSubpath = compareVersion(esToolkitVersion, '1.39.5') >= 0;
+
+const isFunctionPath = supportsCompatSubpath
+  ? "/node_modules/es-toolkit/dist/compat/predicate/isFunction.mjs"
+  : "/node_modules/es-toolkit/dist/predicate/isFunction.mjs";
+
 const defaultConfig: any = {
   entry: ENTRY,
   mode: "production",
@@ -63,7 +91,7 @@ describe.sequential("lodash", () => {
           `import _ from 'lodash';_.isEqual({}, {});_.isFunction(() => {});`,
           [
             "/node_modules/es-toolkit/dist/predicate/isEqual.mjs",
-            "/node_modules/es-toolkit/dist/compat/predicate/isFunction.mjs",
+            isFunctionPath,
           ],
           ["Lodash <https://lodash.com/>"],
           done
@@ -76,7 +104,7 @@ describe.sequential("lodash", () => {
         webpackBuilder(
           `import _ from 'lodash';_.sortedUniq([1, 1, 2]);_.isFunction(() => {});`,
           ["Lodash <https://lodash.com/>"],
-          ["/node_modules/es-toolkit/dist/compat/predicate/isFunction.mjs"],
+          [isFunctionPath],
           done
         );
       });
@@ -123,7 +151,7 @@ describe.sequential("lodash", () => {
           `import { isEqual, isFunction } from 'lodash';isEqual({}, {});isFunction(() => {});`,
           [
             "/node_modules/es-toolkit/dist/predicate/isEqual.mjs",
-            "/node_modules/es-toolkit/dist/compat/predicate/isFunction.mjs",
+            isFunctionPath,
           ],
           ["Lodash <https://lodash.com/>"],
           done
@@ -148,7 +176,7 @@ describe.sequential("lodash", () => {
           `import { isEqual as lodashIsEqual, isFunction as lodashIsFunction } from 'lodash';lodashIsEqual({}, {});lodashIsFunction(() => {});`,
           [
             "/node_modules/es-toolkit/dist/predicate/isEqual.mjs",
-            "/node_modules/es-toolkit/dist/compat/predicate/isFunction.mjs",
+            isFunctionPath,
           ],
           ["Lodash <https://lodash.com/>"],
           done
@@ -214,7 +242,7 @@ describe.sequential("lodash", () => {
         webpackBuilder(
           `import _, { isEqual } from 'lodash';_.isFunction(() => {});isEqual({}, {});`,
           [
-            "/node_modules/es-toolkit/dist/compat/predicate/isFunction.mjs",
+            isFunctionPath,
             "/node_modules/es-toolkit/dist/predicate/isEqual.mjs",
           ],
           [],
@@ -228,7 +256,7 @@ describe.sequential("lodash", () => {
         webpackBuilder(
           `import _, { isEqual as lodashIsEqual } from 'lodash';_.isFunction(() => {});lodashIsEqual({}, {});`,
           [
-            "/node_modules/es-toolkit/dist/compat/predicate/isFunction.mjs",
+            isFunctionPath,
             "/node_modules/es-toolkit/dist/predicate/isEqual.mjs",
           ],
           [],
@@ -242,7 +270,7 @@ describe.sequential("lodash", () => {
         webpackBuilder(
           `import _, { sortedUniq } from 'lodash';_.isFunction(() => {});sortedUniq([1, 1, 2]);`,
           [
-            "/node_modules/es-toolkit/dist/compat/predicate/isFunction.mjs",
+            isFunctionPath,
             "Lodash <https://lodash.com/>",
           ],
           [],
@@ -256,7 +284,7 @@ describe.sequential("lodash", () => {
         webpackBuilder(
           `import _, { sortedUniq, isEqual } from 'lodash';_.isFunction(() => {});isEqual({}, {});sortedUniq([1, 1, 2]);`,
           [
-            "/node_modules/es-toolkit/dist/compat/predicate/isFunction.mjs",
+            isFunctionPath,
             "/node_modules/es-toolkit/dist/predicate/isEqual.mjs",
             "Lodash <https://lodash.com/>",
           ],
@@ -337,7 +365,7 @@ describe.sequential("lodash-es", () => {
           `import _ from 'lodash-es';_.isEqual({}, {});_.isFunction(() => {});`,
           [
             "/node_modules/es-toolkit/dist/predicate/isEqual.mjs",
-            "/node_modules/es-toolkit/dist/compat/predicate/isFunction.mjs",
+            isFunctionPath,
           ],
           [],
           done
@@ -350,7 +378,7 @@ describe.sequential("lodash-es", () => {
         webpackBuilder(
           `import _ from 'lodash-es';_.sortedUniq([1, 1, 2]);_.isFunction(() => {});`,
           ["/node_modules/lodash-es/sortedUniq.js"],
-          ["/node_modules/es-toolkit/dist/compat/predicate/isFunction.mjs"],
+          [isFunctionPath],
           done
         );
       });
@@ -397,7 +425,7 @@ describe.sequential("lodash-es", () => {
           `import { isEqual, isFunction } from 'lodash-es';isEqual({}, {});isFunction(() => {});`,
           [
             "/node_modules/es-toolkit/dist/predicate/isEqual.mjs",
-            "/node_modules/es-toolkit/dist/compat/predicate/isFunction.mjs",
+            isFunctionPath,
           ],
           [],
           done
@@ -422,7 +450,7 @@ describe.sequential("lodash-es", () => {
           `import { isEqual as lodashIsEqual, isFunction as lodashIsFunction } from 'lodash-es';lodashIsEqual({}, {});lodashIsFunction(() => {});`,
           [
             "/node_modules/es-toolkit/dist/predicate/isEqual.mjs",
-            "/node_modules/es-toolkit/dist/compat/predicate/isFunction.mjs",
+            isFunctionPath,
           ],
           [],
           done
@@ -488,7 +516,7 @@ describe.sequential("lodash-es", () => {
         webpackBuilder(
           `import _, { isEqual } from 'lodash-es';_.isFunction(() => {});isEqual({}, {});`,
           [
-            "/node_modules/es-toolkit/dist/compat/predicate/isFunction.mjs",
+            isFunctionPath,
             "/node_modules/es-toolkit/dist/predicate/isEqual.mjs",
           ],
           [],
@@ -501,7 +529,7 @@ describe.sequential("lodash-es", () => {
         webpackBuilder(
           `import _, { isEqual as lodashIsEqual } from 'lodash-es';_.isFunction(() => {});lodashIsEqual({}, {});`,
           [
-            "/node_modules/es-toolkit/dist/compat/predicate/isFunction.mjs",
+            isFunctionPath,
             "/node_modules/es-toolkit/dist/predicate/isEqual.mjs",
           ],
           [],
@@ -515,7 +543,7 @@ describe.sequential("lodash-es", () => {
         webpackBuilder(
           `import _, { sortedUniq } from 'lodash-es';_.isFunction(() => {});sortedUniq([1, 1, 2]);`,
           [
-            "/node_modules/es-toolkit/dist/compat/predicate/isFunction.mjs",
+            isFunctionPath,
             "/node_modules/lodash-es/sortedUniq.js",
           ],
           [],
@@ -529,7 +557,7 @@ describe.sequential("lodash-es", () => {
         webpackBuilder(
           `import _, { sortedUniq, isEqual } from 'lodash-es';_.isFunction(() => {});isEqual({}, {});sortedUniq([1, 1, 2]);`,
           [
-            "/node_modules/es-toolkit/dist/compat/predicate/isFunction.mjs",
+            isFunctionPath,
             "/node_modules/es-toolkit/dist/predicate/isEqual.mjs",
             "/node_modules/lodash-es/sortedUniq.js",
           ],
@@ -668,7 +696,7 @@ describe.sequential("options", () => {
       webpackBuilder(
         `import { isEqual, isFunction } from 'lodash';isEqual({}, {});isFunction(() => {});`,
         ["/node_modules/es-toolkit/dist/predicate/isEqual.mjs"],
-        ["/node_modules/es-toolkit/dist/compat/predicate/isFunction.mjs"],
+        [isFunctionPath],
         done,
         {
           plugins: [new WebpackEsToolkitPlugin({ excludes: ["isFunction"] })],
@@ -677,3 +705,4 @@ describe.sequential("options", () => {
     });
   });
 });
+
