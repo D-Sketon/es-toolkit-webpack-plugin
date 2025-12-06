@@ -14,6 +14,33 @@ const lodashSinglePattern = /^lodash\/\w+\.js$/;
 const lodashEsSinglePattern = /^lodash-es\/\w+\.js$/;
 const lodashDotSinglePattern = /^lodash\.\w+$/;
 
+function getEsToolkitVersion(): string | null {
+  try {
+    const pkgPath = require.resolve('es-toolkit/package.json');
+    const pkg = require(pkgPath);
+    return pkg.version;
+  } catch {
+    return null;
+  }
+}
+
+function compareVersion(version: string, target: string): number {
+  const v1 = version.split('.').map(Number);
+  const v2 = target.split('.').map(Number);
+  for (let i = 0; i < 3; i++) {
+    if (v1[i] > v2[i]) return 1;
+    if (v1[i] < v2[i]) return -1;
+  }
+  return 0;
+}
+
+function supportsSubpathRequire(): boolean {
+  const version = getEsToolkitVersion();
+  if (!version) return false;
+  // 1.39.3+ supports require('es-toolkit/compat/isEqual')
+  return compareVersion(version, '1.39.3') >= 0;
+}
+
 export interface WebpackEsToolkitPluginOptions {
   excludes?: string[];
 }
@@ -21,10 +48,12 @@ export interface WebpackEsToolkitPluginOptions {
 export default class WebpackEsToolkitPlugin {
   supportedFunctions: string[];
   excludes: string[];
+  supportsSubpathRequire: boolean;
 
   constructor(options: WebpackEsToolkitPluginOptions = {}) {
     this.excludes = options.excludes || [];
     this.supportedFunctions = Object.keys(esToolkitCompat);
+    this.supportsSubpathRequire = supportsSubpathRequire();
     this.excludes.forEach((fn) => {
       const index = this.supportedFunctions.indexOf(fn);
       if (index !== -1) {
@@ -273,27 +302,35 @@ export default class WebpackEsToolkitPlugin {
                 .split("/")[1]
                 .split(".")[0];
               if (this.isSupportedFunction(functionName)) {
-                // -> const isEqual = require('es-toolkit/compat').isEqual;
-                // this may increase the size of the bundle
-                // TODO find a way to import only the required function
-                // change init from CallExpression to MemberExpression
-                const callExpression = esToolkitCompat.cloneDeep(
-                  node.declarations[0].init
-                );
-                (callExpression.arguments[0] as Literal).value =
-                  "es-toolkit/compat";
-                (callExpression.arguments[0] as Literal).raw =
-                  "'es-toolkit/compat'";
-                const memberExpression = node.declarations[0]
-                  .init as unknown as MemberExpression;
-                memberExpression.type = "MemberExpression";
-                memberExpression.object = callExpression;
-                memberExpression.property = esToolkitCompat.cloneDeep(
-                  node.declarations[0].id
-                ) as unknown as PrivateIdentifier;
-                memberExpression.property.name = functionName;
-                memberExpression.computed = false;
-                memberExpression.optional = false;
+                if (this.supportsSubpathRequire) {
+                  // es-toolkit 1.39.3+
+                  // -> const isEqual = require('es-toolkit/compat/isEqual');
+                  (node.declarations[0].init.arguments[0] as Literal).value =
+                    `es-toolkit/compat/${functionName}`;
+                  (node.declarations[0].init.arguments[0] as Literal).raw =
+                    `'es-toolkit/compat/${functionName}'`;
+                } else {
+                  // es-toolkit < 1.39.3
+                  // -> const isEqual = require('es-toolkit/compat').isEqual;
+                  // this may increase the size of the bundle
+                  const callExpression = esToolkitCompat.cloneDeep(
+                    node.declarations[0].init
+                  );
+                  (callExpression.arguments[0] as Literal).value =
+                    "es-toolkit/compat";
+                  (callExpression.arguments[0] as Literal).raw =
+                    "'es-toolkit/compat'";
+                  const memberExpression = node.declarations[0]
+                    .init as unknown as MemberExpression;
+                  memberExpression.type = "MemberExpression";
+                  memberExpression.object = callExpression;
+                  memberExpression.property = esToolkitCompat.cloneDeep(
+                    node.declarations[0].id
+                  ) as unknown as PrivateIdentifier;
+                  memberExpression.property.name = functionName;
+                  memberExpression.computed = false;
+                  memberExpression.optional = false;
+                }
               }
             } else if (
               requireArgument.type === "Literal" &&
@@ -309,27 +346,36 @@ export default class WebpackEsToolkitPlugin {
                   (i) => i.toLowerCase() === functionName.toLowerCase()
                 ))
               ) {
-                // -> const isEqual = require('es-toolkit/compat').isEqual;
-                // this may increase the size of the bundle
-                // TODO find a way to import only the required function
-                // change init from CallExpression to MemberExpression
-                const callExpression = esToolkitCompat.cloneDeep(
-                  node.declarations[0].init
-                );
-                (callExpression.arguments[0] as Literal).value =
-                  "es-toolkit/compat";
-                (callExpression.arguments[0] as Literal).raw =
-                  "'es-toolkit/compat'";
-                const memberExpression = node.declarations[0]
-                  .init as unknown as MemberExpression;
-                memberExpression.type = "MemberExpression";
-                memberExpression.object = callExpression;
-                memberExpression.property = esToolkitCompat.cloneDeep(
-                  node.declarations[0].id
-                ) as unknown as PrivateIdentifier;
-                memberExpression.property.name = functionName;
-                memberExpression.computed = false;
-                memberExpression.optional = false;
+                if (this.supportsSubpathRequire) {
+                  // es-toolkit 1.39.3+
+                  // -> const isEqual = require('es-toolkit/compat/isEqual');
+                  (node.declarations[0].init.arguments[0] as Literal).value =
+                    `es-toolkit/compat/${singleImportFileName}`;
+                  (node.declarations[0].init.arguments[0] as Literal).raw =
+                    `'es-toolkit/compat/${singleImportFileName}'`;
+                } else {
+                  // es-toolkit < 1.39.3
+                  // -> const isEqual = require('es-toolkit/compat').isEqual;
+                  // this may increase the size of the bundle
+                  const callExpression = esToolkitCompat.cloneDeep(
+                    node.declarations[0].init
+                  );
+                  (callExpression.arguments[0] as Literal).value =
+                    "es-toolkit/compat";
+                  (callExpression.arguments[0] as Literal).raw =
+                    "'es-toolkit/compat'";
+                  const memberExpression = node.declarations[0]
+                    .init as unknown as MemberExpression;
+                  memberExpression.type = "MemberExpression";
+                  memberExpression.object = callExpression;
+                  memberExpression.property = esToolkitCompat.cloneDeep(
+                    node.declarations[0].id
+                  ) as unknown as PrivateIdentifier;
+                 
+                  memberExpression.property.name = singleImportFileName;
+                  memberExpression.computed = false;
+                  memberExpression.optional = false;
+                }
               }
             }
           }

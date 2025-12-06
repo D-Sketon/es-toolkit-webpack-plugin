@@ -7,7 +7,6 @@ import WebpackEsToolkitPlugin from "../src";
 const ENTRY = path.resolve(__dirname, "test.js");
 const OUTPUT = path.resolve(__dirname, "dist/main.js");
 
-// 检�?es-toolkit 版本
 function getEsToolkitVersion(): string {
   try {
     const pkgPath = require.resolve('es-toolkit/package.json');
@@ -427,7 +426,7 @@ describe.sequential("lodash", () => {
           module.exports = { result: _.isEqual({a: 1}, {a: 1}) };`,
           [
             `function isEqual(a, b) {`,
-            `return isEqualWith.isEqualWith(a, b, noop.noop);`,
+            `isEqualWith(a, b, noop.noop);`,
           ],
           ["Lodash <https://lodash.com/>"],
           done,
@@ -462,7 +461,7 @@ describe.sequential("lodash", () => {
           module.exports = { result: isEqual({a: 1}, {a: 1}) };`,
           [
             `function isEqual(a, b) {`,
-            `return isEqualWith.isEqualWith(a, b, noop.noop);`,
+            `isEqualWith(a, b, noop.noop);`,
           ],
           ["Lodash <https://lodash.com/>"],
           done,
@@ -823,7 +822,7 @@ describe.sequential("lodash-es", () => {
           module.exports = { result: _.isEqual({x: 1}, {x: 1}) };`,
           [
             `function isEqual(a, b) {`,
-            `return isEqualWith.isEqualWith(a, b, noop.noop);`,
+            `isEqualWith(a, b, noop.noop);`,
           ],
           [`Lodash <https://lodash.com/>`],
           done,
@@ -858,7 +857,7 @@ describe.sequential("lodash-es", () => {
           module.exports = { result: isEqual({a: 1}, {a: 1}) };`,
           [
             `function isEqual(a, b) {`,
-            `return isEqualWith.isEqualWith(a, b, noop.noop);`,
+            `isEqualWith(a, b, noop.noop);`,
           ],
           ["Lodash <https://lodash.com/>"],
           done,
@@ -940,7 +939,7 @@ describe.sequential("lodash-separate", () => {
         module.exports = { result1: lodashIsEqual({a: 1}, {a: 1}), result2: lodashIsEqual({a: 1}, {a: 2}) };`,
         [
           `function isEqual(a, b) {`,
-          `return isEqualWith.isEqualWith(a, b, noop.noop);`,
+          `isEqualWith(a, b, noop.noop);`,
         ],
         [`Lodash <https://lodash.com/>`],
         done,
