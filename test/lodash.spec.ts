@@ -25,22 +25,35 @@ const webpackBuilder = (
   src: string,
   contains: string[],
   notContains: string[],
-  done: (value: void | PromiseLike<void>) => void,
+  done: (value?: any | PromiseLike<any>) => void,
   options?: any
 ) => {
   fs.writeFileSync(ENTRY, src);
-  webpack({ ...defaultConfig, ...options }, () => {
-    const output = fs.readFileSync(OUTPUT, "utf-8");
-    contains.forEach((c) => expect(output).toContain(c));
-    notContains.forEach((c) => expect(output).not.toContain(c));
-    done();
+  webpack({ ...defaultConfig, ...options }, (err, stats) => {
+    if (err) {
+      return done(Promise.reject(err));
+    }
+    if (stats?.hasErrors()) {
+      return done(Promise.reject(new Error(stats.toString())));
+    }
+
+    try {
+      const output = fs.readFileSync(OUTPUT, "utf-8");
+      contains.forEach((c) => expect(output).toContain(c));
+      notContains.forEach((c) => expect(output).not.toContain(c));
+      done();
+    } catch (error) {
+      done(Promise.reject(error));
+    }
   });
 };
 
 describe.sequential("lodash", () => {
   afterEach(() => {
-    fs.unlinkSync(ENTRY);
-    fs.unlinkSync(OUTPUT);
+    try {
+      fs.unlinkSync(ENTRY);
+      fs.unlinkSync(OUTPUT);
+    } catch {}
   });
 
   describe("default import", () => {
@@ -50,7 +63,7 @@ describe.sequential("lodash", () => {
           `import _ from 'lodash';_.isEqual({}, {});_.isFunction(() => {});`,
           [
             "/node_modules/es-toolkit/dist/predicate/isEqual.mjs",
-            "/node_modules/es-toolkit/dist/predicate/isFunction.mjs",
+            "/node_modules/es-toolkit/dist/compat/predicate/isFunction.mjs",
           ],
           ["Lodash <https://lodash.com/>"],
           done
@@ -61,9 +74,9 @@ describe.sequential("lodash", () => {
     it("should keep default import from lodash if an unsupported function is imported", () => {
       return new Promise<void>((done) => {
         webpackBuilder(
-          `import _ from 'lodash';_.sortedIndex([30, 50], 40);_.isFunction(() => {});`,
+          `import _ from 'lodash';_.sortedUniq([1, 1, 2]);_.isFunction(() => {});`,
           ["Lodash <https://lodash.com/>"],
-          ["/node_modules/es-toolkit/dist/predicate/isFunction.mjs"],
+          ["/node_modules/es-toolkit/dist/compat/predicate/isFunction.mjs"],
           done
         );
       });
@@ -72,7 +85,7 @@ describe.sequential("lodash", () => {
     it("should not raise false positives for unsupported functions", () => {
       return new Promise<void>((done) => {
         webpackBuilder(
-          `import lodash from 'lodash';totallynotlodash.sortedIndex([30, 50], 40);lodash.isEqual({}, {});`,
+          `import lodash from 'lodash';totallynotlodash.sortedUniq([1, 1, 2]);lodash.isEqual({}, {});`,
           ["/node_modules/es-toolkit/dist/predicate/isEqual.mjs"],
           ["Lodash <https://lodash.com/>"],
           done
@@ -96,7 +109,7 @@ describe.sequential("lodash", () => {
     it("should keep unsupported named imports from lodash", () => {
       return new Promise<void>((done) => {
         webpackBuilder(
-          `import { sortedIndex } from 'lodash';sortedIndex([30, 50], 40)`,
+          `import { sortedUniq } from 'lodash';sortedUniq([1, 1, 2])`,
           ["Lodash <https://lodash.com/>"],
           [],
           done
@@ -110,7 +123,7 @@ describe.sequential("lodash", () => {
           `import { isEqual, isFunction } from 'lodash';isEqual({}, {});isFunction(() => {});`,
           [
             "/node_modules/es-toolkit/dist/predicate/isEqual.mjs",
-            "/node_modules/es-toolkit/dist/predicate/isFunction.mjs",
+            "/node_modules/es-toolkit/dist/compat/predicate/isFunction.mjs",
           ],
           ["Lodash <https://lodash.com/>"],
           done
@@ -135,7 +148,7 @@ describe.sequential("lodash", () => {
           `import { isEqual as lodashIsEqual, isFunction as lodashIsFunction } from 'lodash';lodashIsEqual({}, {});lodashIsFunction(() => {});`,
           [
             "/node_modules/es-toolkit/dist/predicate/isEqual.mjs",
-            "/node_modules/es-toolkit/dist/predicate/isFunction.mjs",
+            "/node_modules/es-toolkit/dist/compat/predicate/isFunction.mjs",
           ],
           ["Lodash <https://lodash.com/>"],
           done
@@ -146,7 +159,7 @@ describe.sequential("lodash", () => {
     it("should replace named import from lodash with named import from es-toolkit/compat and keep unsupported named imports from lodash", () => {
       return new Promise<void>((done) => {
         webpackBuilder(
-          `import { sortedIndex, isEqual } from 'lodash';isEqual({}, {});sortedIndex([30, 50], 40)`,
+          `import { sortedUniq, isEqual } from 'lodash';isEqual({}, {});sortedUniq([1, 1, 2])`,
           [
             "/node_modules/es-toolkit/dist/predicate/isEqual.mjs",
             "Lodash <https://lodash.com/>",
@@ -184,9 +197,9 @@ describe.sequential("lodash", () => {
     it("should keep unsupported default imports from lodash/*.js", () => {
       return new Promise<void>((done) => {
         webpackBuilder(
-          `import sortedIndex from 'lodash/sortedIndex.js';sortedIndex([30, 50], 40)`,
+          `import sortedUniq from 'lodash/sortedUniq.js';sortedUniq([1, 1, 2])`,
           [
-            "Uses a binary search to determine the lowest index at which `value`",
+            "This method is like `_.uniq` except that it's designed and optimized",
           ],
           [],
           done
@@ -201,7 +214,7 @@ describe.sequential("lodash", () => {
         webpackBuilder(
           `import _, { isEqual } from 'lodash';_.isFunction(() => {});isEqual({}, {});`,
           [
-            "/node_modules/es-toolkit/dist/predicate/isFunction.mjs",
+            "/node_modules/es-toolkit/dist/compat/predicate/isFunction.mjs",
             "/node_modules/es-toolkit/dist/predicate/isEqual.mjs",
           ],
           [],
@@ -215,7 +228,7 @@ describe.sequential("lodash", () => {
         webpackBuilder(
           `import _, { isEqual as lodashIsEqual } from 'lodash';_.isFunction(() => {});lodashIsEqual({}, {});`,
           [
-            "/node_modules/es-toolkit/dist/predicate/isFunction.mjs",
+            "/node_modules/es-toolkit/dist/compat/predicate/isFunction.mjs",
             "/node_modules/es-toolkit/dist/predicate/isEqual.mjs",
           ],
           [],
@@ -227,9 +240,9 @@ describe.sequential("lodash", () => {
     it("should keep unsupported default and named imports from lodash", () => {
       return new Promise<void>((done) => {
         webpackBuilder(
-          `import _, { sortedIndex } from 'lodash';_.isFunction(() => {});sortedIndex([30, 50], 40);`,
+          `import _, { sortedUniq } from 'lodash';_.isFunction(() => {});sortedUniq([1, 1, 2]);`,
           [
-            "/node_modules/es-toolkit/dist/predicate/isFunction.mjs",
+            "/node_modules/es-toolkit/dist/compat/predicate/isFunction.mjs",
             "Lodash <https://lodash.com/>",
           ],
           [],
@@ -241,9 +254,9 @@ describe.sequential("lodash", () => {
     it("should replace default and named import from lodash with named import from es-toolkit/compat and keep unsupported named imports from lodash", () => {
       return new Promise<void>((done) => {
         webpackBuilder(
-          `import _, { sortedIndex, isEqual } from 'lodash';_.isFunction(() => {});isEqual({}, {});sortedIndex([30, 50], 40);`,
+          `import _, { sortedUniq, isEqual } from 'lodash';_.isFunction(() => {});isEqual({}, {});sortedUniq([1, 1, 2]);`,
           [
-            "/node_modules/es-toolkit/dist/predicate/isFunction.mjs",
+            "/node_modules/es-toolkit/dist/compat/predicate/isFunction.mjs",
             "/node_modules/es-toolkit/dist/predicate/isEqual.mjs",
             "Lodash <https://lodash.com/>",
           ],
@@ -259,7 +272,10 @@ describe.sequential("lodash", () => {
       return new Promise<void>((done) => {
         webpackBuilder(
           `const _ = require('lodash');_.isEqual({}, {});`,
-          [`function isEqual(a, b) {`, `return isEqualWith(a, b, noop.noop);`],
+          [
+            `function isEqual(a, b) {`,
+            `return isEqualWith.isEqualWith(a, b, noop.noop);`,
+          ],
           ["Lodash <https://lodash.com/>"],
           done
         );
@@ -269,7 +285,7 @@ describe.sequential("lodash", () => {
     it("should keep require from lodash if an unsupported function is imported", () => {
       return new Promise<void>((done) => {
         webpackBuilder(
-          `const _ = require('lodash');_.sortedIndex([30, 50], 40);`,
+          `const _ = require('lodash');_.sortedUniq([1, 1, 2]);`,
           ["Lodash <https://lodash.com/>"],
           [],
           done
@@ -281,7 +297,10 @@ describe.sequential("lodash", () => {
       return new Promise<void>((done) => {
         webpackBuilder(
           `const isEqual = require('lodash/isEqual.js');isEqual({}, {});`,
-          [`function isEqual(a, b) {`, `return isEqualWith(a, b, noop.noop);`],
+          [
+            `function isEqual(a, b) {`,
+            `return isEqualWith.isEqualWith(a, b, noop.noop);`,
+          ],
           ["Lodash <https://lodash.com/>"],
           done
         );
@@ -291,9 +310,9 @@ describe.sequential("lodash", () => {
     it("should keep require lodash/*.js from lodash if an unsupported function is imported", () => {
       return new Promise<void>((done) => {
         webpackBuilder(
-          `const sortedIndex = require('lodash/sortedIndex.js');sortedIndex([30, 50], 40);`,
+          `const sortedUniq = require('lodash/sortedUniq.js');sortedUniq([1, 1, 2]);`,
           [
-            "Uses a binary search to determine the lowest index at which `value`",
+            "This method is like `_.uniq` except that it's designed and optimized",
           ],
           [],
           done
@@ -305,8 +324,10 @@ describe.sequential("lodash", () => {
 
 describe.sequential("lodash-es", () => {
   afterEach(() => {
-    fs.unlinkSync(ENTRY);
-    fs.unlinkSync(OUTPUT);
+    try {
+      fs.unlinkSync(ENTRY);
+      fs.unlinkSync(OUTPUT);
+    } catch {}
   });
 
   describe("default import", () => {
@@ -316,7 +337,7 @@ describe.sequential("lodash-es", () => {
           `import _ from 'lodash-es';_.isEqual({}, {});_.isFunction(() => {});`,
           [
             "/node_modules/es-toolkit/dist/predicate/isEqual.mjs",
-            "/node_modules/es-toolkit/dist/predicate/isFunction.mjs",
+            "/node_modules/es-toolkit/dist/compat/predicate/isFunction.mjs",
           ],
           [],
           done
@@ -327,9 +348,9 @@ describe.sequential("lodash-es", () => {
     it("should keep default import from lodash-es if an unsupported function is imported", () => {
       return new Promise<void>((done) => {
         webpackBuilder(
-          `import _ from 'lodash-es';_.sortedIndex([30, 50], 40);_.isFunction(() => {});`,
-          ["/node_modules/lodash-es/sortedIndex.js"],
-          ["/node_modules/es-toolkit/dist/predicate/isFunction.mjs"],
+          `import _ from 'lodash-es';_.sortedUniq([1, 1, 2]);_.isFunction(() => {});`,
+          ["/node_modules/lodash-es/sortedUniq.js"],
+          ["/node_modules/es-toolkit/dist/compat/predicate/isFunction.mjs"],
           done
         );
       });
@@ -338,9 +359,9 @@ describe.sequential("lodash-es", () => {
     it("should not raise false positives for unsupported functions", () => {
       return new Promise<void>((done) => {
         webpackBuilder(
-          `import lodash from 'lodash-es';totallynotlodash.sortedIndex([30, 50], 40);lodash.isEqual({}, {});`,
+          `import lodash from 'lodash-es';totallynotlodash.sortedUniq([1, 1, 2]);lodash.isEqual({}, {});`,
           ["/node_modules/es-toolkit/dist/predicate/isEqual.mjs"],
-          ["/node_modules/lodash-es/sortedIndex.js"],
+          ["/node_modules/lodash-es/sortedUniq.js"],
           done
         );
       });
@@ -362,8 +383,8 @@ describe.sequential("lodash-es", () => {
     it("should keep unsupported named imports from lodash-es", () => {
       return new Promise<void>((done) => {
         webpackBuilder(
-          `import { sortedIndex } from 'lodash-es';sortedIndex([30, 50], 40)`,
-          ["/node_modules/lodash-es/sortedIndex.js"],
+          `import { sortedUniq } from 'lodash-es';sortedUniq([1, 1, 2])`,
+          ["/node_modules/lodash-es/sortedUniq.js"],
           [],
           done
         );
@@ -376,7 +397,7 @@ describe.sequential("lodash-es", () => {
           `import { isEqual, isFunction } from 'lodash-es';isEqual({}, {});isFunction(() => {});`,
           [
             "/node_modules/es-toolkit/dist/predicate/isEqual.mjs",
-            "/node_modules/es-toolkit/dist/predicate/isFunction.mjs",
+            "/node_modules/es-toolkit/dist/compat/predicate/isFunction.mjs",
           ],
           [],
           done
@@ -401,7 +422,7 @@ describe.sequential("lodash-es", () => {
           `import { isEqual as lodashIsEqual, isFunction as lodashIsFunction } from 'lodash-es';lodashIsEqual({}, {});lodashIsFunction(() => {});`,
           [
             "/node_modules/es-toolkit/dist/predicate/isEqual.mjs",
-            "/node_modules/es-toolkit/dist/predicate/isFunction.mjs",
+            "/node_modules/es-toolkit/dist/compat/predicate/isFunction.mjs",
           ],
           [],
           done
@@ -412,10 +433,10 @@ describe.sequential("lodash-es", () => {
     it("should replace named import from lodash-es with named import from es-toolkit/compat and keep unsupported named imports from lodash", () => {
       return new Promise<void>((done) => {
         webpackBuilder(
-          `import { sortedIndex, isEqual } from 'lodash-es';isEqual({}, {});sortedIndex([30, 50], 40)`,
+          `import { sortedUniq, isEqual } from 'lodash-es';isEqual({}, {});sortedUniq([1, 1, 2])`,
           [
             "/node_modules/es-toolkit/dist/predicate/isEqual.mjs",
-            "/node_modules/lodash-es/sortedIndex.js",
+            "/node_modules/lodash-es/sortedUniq.js",
           ],
           [],
           done
@@ -450,9 +471,9 @@ describe.sequential("lodash-es", () => {
     it("should keep unsupported default imports from lodash-es/*.js", () => {
       return new Promise<void>((done) => {
         webpackBuilder(
-          `import sortedIndex from 'lodash-es/sortedIndex.js';sortedIndex([30, 50], 40)`,
+          `import sortedUniq from 'lodash-es/sortedUniq.js';sortedUniq([1, 1, 2])`,
           [
-            "Uses a binary search to determine the lowest index at which `value`",
+            "This method is like `_.uniq` except that it's designed and optimized",
           ],
           [],
           done
@@ -467,7 +488,7 @@ describe.sequential("lodash-es", () => {
         webpackBuilder(
           `import _, { isEqual } from 'lodash-es';_.isFunction(() => {});isEqual({}, {});`,
           [
-            "/node_modules/es-toolkit/dist/predicate/isFunction.mjs",
+            "/node_modules/es-toolkit/dist/compat/predicate/isFunction.mjs",
             "/node_modules/es-toolkit/dist/predicate/isEqual.mjs",
           ],
           [],
@@ -480,7 +501,7 @@ describe.sequential("lodash-es", () => {
         webpackBuilder(
           `import _, { isEqual as lodashIsEqual } from 'lodash-es';_.isFunction(() => {});lodashIsEqual({}, {});`,
           [
-            "/node_modules/es-toolkit/dist/predicate/isFunction.mjs",
+            "/node_modules/es-toolkit/dist/compat/predicate/isFunction.mjs",
             "/node_modules/es-toolkit/dist/predicate/isEqual.mjs",
           ],
           [],
@@ -492,10 +513,10 @@ describe.sequential("lodash-es", () => {
     it("should keep unsupported default and named imports from lodash-es", () => {
       return new Promise<void>((done) => {
         webpackBuilder(
-          `import _, { sortedIndex } from 'lodash-es';_.isFunction(() => {});sortedIndex([30, 50], 40);`,
+          `import _, { sortedUniq } from 'lodash-es';_.isFunction(() => {});sortedUniq([1, 1, 2]);`,
           [
-            "/node_modules/es-toolkit/dist/predicate/isFunction.mjs",
-            "/node_modules/lodash-es/sortedIndex.js",
+            "/node_modules/es-toolkit/dist/compat/predicate/isFunction.mjs",
+            "/node_modules/lodash-es/sortedUniq.js",
           ],
           [],
           done
@@ -506,11 +527,11 @@ describe.sequential("lodash-es", () => {
     it("should replace default and named import from lodash-es with named import from es-toolkit/compat and keep unsupported named imports from lodash-es", () => {
       return new Promise<void>((done) => {
         webpackBuilder(
-          `import _, { sortedIndex, isEqual } from 'lodash-es';_.isFunction(() => {});isEqual({}, {});sortedIndex([30, 50], 40);`,
+          `import _, { sortedUniq, isEqual } from 'lodash-es';_.isFunction(() => {});isEqual({}, {});sortedUniq([1, 1, 2]);`,
           [
-            "/node_modules/es-toolkit/dist/predicate/isFunction.mjs",
+            "/node_modules/es-toolkit/dist/compat/predicate/isFunction.mjs",
             "/node_modules/es-toolkit/dist/predicate/isEqual.mjs",
-            "/node_modules/lodash-es/sortedIndex.js",
+            "/node_modules/lodash-es/sortedUniq.js",
           ],
           [],
           done
@@ -524,7 +545,10 @@ describe.sequential("lodash-es", () => {
       return new Promise<void>((done) => {
         webpackBuilder(
           `const _ = require('lodash-es');_.isEqual({}, {});`,
-          [`function isEqual(a, b) {`, `return isEqualWith(a, b, noop.noop);`],
+          [
+            `function isEqual(a, b) {`,
+            `return isEqualWith.isEqualWith(a, b, noop.noop);`,
+          ],
           [`Lodash <https://lodash.com/>`],
           done
         );
@@ -534,8 +558,8 @@ describe.sequential("lodash-es", () => {
     it("should keep require from lodash-es if an unsupported function is imported", () => {
       return new Promise<void>((done) => {
         webpackBuilder(
-          `const _ = require('lodash-es');_.sortedIndex([30, 50], 40);`,
-          [`lodash_es_sortedIndex`],
+          `const _ = require('lodash-es');_.sortedUniq([1, 1, 2]);`,
+          [`lodash_es_sortedUniq`],
           [],
           done
         );
@@ -546,7 +570,10 @@ describe.sequential("lodash-es", () => {
       return new Promise<void>((done) => {
         webpackBuilder(
           `const isEqual = require('lodash-es/isEqual.js');isEqual({}, {});`,
-          [`function isEqual(a, b) {`, `return isEqualWith(a, b, noop.noop);`],
+          [
+            `function isEqual(a, b) {`,
+            `return isEqualWith.isEqualWith(a, b, noop.noop);`,
+          ],
           ["Lodash <https://lodash.com/>"],
           done
         );
@@ -556,9 +583,9 @@ describe.sequential("lodash-es", () => {
     it("should keep require lodash-es/*.js from lodash if an unsupported function is imported", () => {
       return new Promise<void>((done) => {
         webpackBuilder(
-          `const sortedIndex = require('lodash-es/sortedIndex.js');sortedIndex([30, 50], 40);`,
+          `const sortedUniq = require('lodash-es/sortedUniq.js');sortedUniq([1, 1, 2]);`,
           [
-            "Uses a binary search to determine the lowest index at which `value`",
+            "This method is like `_.uniq` except that it's designed and optimized",
           ],
           [],
           done
@@ -570,8 +597,10 @@ describe.sequential("lodash-es", () => {
 
 describe.sequential("lodash-separate", () => {
   afterEach(() => {
-    fs.unlinkSync(ENTRY);
-    fs.unlinkSync(OUTPUT);
+    try {
+      fs.unlinkSync(ENTRY);
+      fs.unlinkSync(OUTPUT);
+    } catch {}
   });
 
   it("support function", () => {
@@ -588,8 +617,10 @@ describe.sequential("lodash-separate", () => {
   it("unsupported function", () => {
     return new Promise<void>((done) => {
       webpackBuilder(
-        `import lodashSortedIndex from 'lodash.sortedindex';sortedIndex([30, 50], 40);`,
-        ["Uses a binary search to determine the lowest index at which `value`"],
+        `import lodashSortedUniq from 'lodash.sorteduniq';sortedUniq([1, 1, 2]);`,
+        [
+          "This method is like `_.uniq` except that it's designed and optimized",
+        ],
         [],
         done
       );
@@ -600,7 +631,10 @@ describe.sequential("lodash-separate", () => {
     return new Promise<void>((done) => {
       webpackBuilder(
         `const lodashIsEqual = require('lodash.isequal');lodashIsEqual({}, {});`,
-        [`function isEqual(a, b) {`, `return isEqualWith(a, b, noop.noop);`],
+        [
+          `function isEqual(a, b) {`,
+          `return isEqualWith.isEqualWith(a, b, noop.noop);`,
+        ],
         [`Lodash <https://lodash.com/>`],
         done
       );
@@ -610,8 +644,10 @@ describe.sequential("lodash-separate", () => {
   it("should keep require from lodash if an unsupported function is imported", () => {
     return new Promise<void>((done) => {
       webpackBuilder(
-        `const lodashSortedIndex = require('lodash.sortedindex');sortedIndex([30, 50], 40);`,
-        ["Uses a binary search to determine the lowest index at which `value`"],
+        `const lodashSortedUniq = require('lodash.sorteduniq');sortedUniq([1, 1, 2]);`,
+        [
+          "This method is like `_.uniq` except that it's designed and optimized",
+        ],
         [],
         done
       );
@@ -621,8 +657,10 @@ describe.sequential("lodash-separate", () => {
 
 describe.sequential("options", () => {
   afterEach(() => {
-    fs.unlinkSync(ENTRY);
-    fs.unlinkSync(OUTPUT);
+    try {
+      fs.unlinkSync(ENTRY);
+      fs.unlinkSync(OUTPUT);
+    } catch {}
   });
 
   it('should exclude functions from "excludes" option', () => {
@@ -630,7 +668,7 @@ describe.sequential("options", () => {
       webpackBuilder(
         `import { isEqual, isFunction } from 'lodash';isEqual({}, {});isFunction(() => {});`,
         ["/node_modules/es-toolkit/dist/predicate/isEqual.mjs"],
-        ["/node_modules/es-toolkit/dist/predicate/isFunction.mjs"],
+        ["/node_modules/es-toolkit/dist/compat/predicate/isFunction.mjs"],
         done,
         {
           plugins: [new WebpackEsToolkitPlugin({ excludes: ["isFunction"] })],

@@ -347,7 +347,7 @@ export default class WebpackEsToolkitPlugin {
           .for("javascript/auto")
           .tap("ModifyImportsWebpackPlugin", (parser) => {
             parser.hooks.program.tap("MyPlugin", (ast: any) => {
-              const originalSource: string = parser.state?.module
+              const originalSource = parser.state?.module
                 .originalSource()
                 ?.source()
                 .toString();

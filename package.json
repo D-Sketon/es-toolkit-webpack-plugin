@@ -4,7 +4,7 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "test": "vitest",
+    "test": "vitest --run",
     "build": "tsc"
   },
   "homepage": "https://github.com/D-Sketon/es-toolkit-webpack-plugin#readme",
@@ -33,7 +33,7 @@
     "babel-loader": "^10.0.0",
     "lodash": "^4.17.21",
     "lodash-es": "^4.17.21",
-    "lodash.sortedindex": "^4.1.0",
+    "lodash.sorteduniq": "^4.2.0",
     "react": "^19.2.1",
     "react-dom": "^19.2.1",
     "typescript": "^5.9.3",
