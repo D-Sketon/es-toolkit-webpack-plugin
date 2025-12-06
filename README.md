@@ -64,7 +64,8 @@ const _ = require("lodash");
 // -> const _ = require("es-toolkit/compat");
 
 const isEqual = require("lodash/isEqual.js");
-// -> const isEqual = require("es-toolkit/compat").isEqual;
+// -> const isEqual = require("es-toolkit/compat").isEqual; (< 1.39.3)
+// -> const isEqual = require("es-toolkit/compat/isEqual"); (>= 1.39.3)
 
 // lodash-es
 import _ from "lodash-es";
@@ -87,14 +88,16 @@ const _ = require("lodash-es");
 // -> const _ = require("es-toolkit/compat");
 
 const isEqual = require("lodash-es/isEqual.js");
-// -> const isEqual = require("es-toolkit/compat").isEqual;
+// -> const isEqual = require("es-toolkit/compat").isEqual; (< 1.39.3)
+// -> const isEqual = require("es-toolkit/compat/isEqual"); (>= 1.39.3)
 
 // lodash.*
 import lodashIsEqual from "lodash.isequal";
 // -> import { isEqual as lodashIsEqual } from "es-toolkit/compat";
 
 const lodashIsEqual = require("lodash.isequal");
-// -> const lodashIsEqual = require("es-toolkit/compat").isEqual;
+// -> const lodashIsEqual = require("es-toolkit/compat").isEqual; (< 1.39.3)
+// -> const lodashIsEqual = require("es-toolkit/compat/isEqual"); (>= 1.39.3);
 ```
 
 ## License
