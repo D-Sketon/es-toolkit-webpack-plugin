@@ -44,26 +44,57 @@ export default {
 
 ```ts
 // lodash
-import _ from "lodash"; // supported
-import { debounce, isEqual } from "lodash"; // supported
-import { debounce as _debounce } from "lodash"; // supported
-import lodashIsEqual from "lodash/isEqual.js"; // supported
-import _, { debounce, isEqual } from "lodash"; // supported
-const _ = require("lodash"); // supported
-const isEqual = require("lodash/isEqual.js"); // supported
+import _ from "lodash";
+// -> import * as _ from "es-toolkit/compat";
+
+import { debounce, isEqual } from "lodash";
+// -> import { debounce, isEqual } from "es-toolkit/compat";
+
+import { debounce as _debounce } from "lodash";
+// -> import { debounce as _debounce } from "es-toolkit/compat";
+
+import lodashIsEqual from "lodash/isEqual.js";
+// -> import { isEqual as lodashIsEqual } from "es-toolkit/compat";
+
+import _, { debounce, isEqual } from "lodash";
+// -> import { debounce, isEqual } from "es-toolkit/compat";
+//    import * as _ from "es-toolkit/compat";
+
+const _ = require("lodash");
+// -> const _ = require("es-toolkit/compat");
+
+const isEqual = require("lodash/isEqual.js");
+// -> const isEqual = require("es-toolkit/compat").isEqual;
 
 // lodash-es
-import _ from "lodash-es"; // supported
-import { debounce, isEqual } from "lodash-es"; // supported
-import { debounce as _debounce } from "lodash-es"; // supported
-import lodashIsEqual from "lodash-es/isEqual.js"; // supported
-import _, { debounce, isEqual } from "lodash-es"; // supported
-const _ = require("lodash-es"); // supported
-const isEqual = require("lodash-es/isEqual.js"); // supported
+import _ from "lodash-es";
+// -> import * as _ from "es-toolkit/compat";
+
+import { debounce, isEqual } from "lodash-es";
+// -> import { debounce, isEqual } from "es-toolkit/compat";
+
+import { debounce as _debounce } from "lodash-es";
+// -> import { debounce as _debounce } from "es-toolkit/compat";
+
+import lodashIsEqual from "lodash-es/isEqual.js";
+// -> import { isEqual as lodashIsEqual } from "es-toolkit/compat";
+
+import _, { debounce, isEqual } from "lodash-es";
+// -> import { debounce, isEqual } from "es-toolkit/compat";
+//    import * as _ from "es-toolkit/compat";
+
+const _ = require("lodash-es");
+// -> const _ = require("es-toolkit/compat");
+
+const isEqual = require("lodash-es/isEqual.js");
+// -> const isEqual = require("es-toolkit/compat").isEqual;
 
 // lodash.*
-import lodashIsEqual from "lodash.isequal"; // supported
-const lodashIsEqual = require("lodash.isequal"); // supported
+import lodashIsEqual from "lodash.isequal";
+// -> import { isEqual as lodashIsEqual } from "es-toolkit/compat";
+
+const lodashIsEqual = require("lodash.isequal");
+// -> const lodashIsEqual = require("es-toolkit/compat").isEqual;
 ```
 
 ## License
