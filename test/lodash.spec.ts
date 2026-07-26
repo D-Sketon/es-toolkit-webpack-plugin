@@ -30,6 +30,12 @@ function compareVersion(version: string, target: string): number {
 const esToolkitVersion = getEsToolkitVersion();
 const supportsCompatSubpath = compareVersion(esToolkitVersion, '1.39.5') >= 0;
 
+// es-toolkit v1.47.0+ changed CJS variable naming from `isEqualWith` to `require_isEqualWith`
+const supportsRequireVariablePrefix = compareVersion(esToolkitVersion, '1.47.0') >= 0;
+const isEqualInternalPattern = supportsRequireVariablePrefix
+  ? 'isEqualWith'
+  : 'isEqualWith(a, b, noop.noop);';
+
 const isFunctionPath = supportsCompatSubpath
   ? "/node_modules/es-toolkit/dist/compat/predicate/isFunction.mjs"
   : "/node_modules/es-toolkit/dist/predicate/isFunction.mjs";
@@ -426,7 +432,7 @@ describe.sequential("lodash", () => {
           module.exports = { result: _.isEqual({a: 1}, {a: 1}) };`,
           [
             `function isEqual(a, b) {`,
-            `isEqualWith(a, b, noop.noop);`,
+            isEqualInternalPattern,
           ],
           ["Lodash <https://lodash.com/>"],
           done,
@@ -461,7 +467,7 @@ describe.sequential("lodash", () => {
           module.exports = { result: isEqual({a: 1}, {a: 1}) };`,
           [
             `function isEqual(a, b) {`,
-            `isEqualWith(a, b, noop.noop);`,
+            isEqualInternalPattern,
           ],
           ["Lodash <https://lodash.com/>"],
           done,
@@ -822,7 +828,7 @@ describe.sequential("lodash-es", () => {
           module.exports = { result: _.isEqual({x: 1}, {x: 1}) };`,
           [
             `function isEqual(a, b) {`,
-            `isEqualWith(a, b, noop.noop);`,
+            isEqualInternalPattern,
           ],
           [`Lodash <https://lodash.com/>`],
           done,
@@ -857,7 +863,7 @@ describe.sequential("lodash-es", () => {
           module.exports = { result: isEqual({a: 1}, {a: 1}) };`,
           [
             `function isEqual(a, b) {`,
-            `isEqualWith(a, b, noop.noop);`,
+            isEqualInternalPattern,
           ],
           ["Lodash <https://lodash.com/>"],
           done,
@@ -939,7 +945,7 @@ describe.sequential("lodash-separate", () => {
         module.exports = { result1: lodashIsEqual({a: 1}, {a: 1}), result2: lodashIsEqual({a: 1}, {a: 2}) };`,
         [
           `function isEqual(a, b) {`,
-          `isEqualWith(a, b, noop.noop);`,
+          isEqualInternalPattern,
         ],
         [`Lodash <https://lodash.com/>`],
         done,

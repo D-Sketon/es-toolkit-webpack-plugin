@@ -1,6 +1,6 @@
 {
   "name": "es-toolkit-webpack-plugin",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
@@ -28,19 +28,20 @@
   "license": "MIT",
   "description": "Webpack 5 plugin for replacing lodash with es-toolkit",
   "devDependencies": {
-    "@babel/preset-react": "^7.28.5",
+    "@babel/preset-react": "^7.29.7",
+    "@types/node": "^26.1.1",
     "acron": "^1.0.6",
-    "babel-loader": "^10.0.0",
-    "lodash": "^4.17.21",
-    "lodash-es": "^4.17.21",
+    "babel-loader": "^10.1.1",
+    "lodash": "^4.18.1",
+    "lodash-es": "^4.18.1",
     "lodash.sorteduniq": "^4.2.0",
-    "react": "^19.2.1",
-    "react-dom": "^19.2.1",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
     "typescript": "^5.9.3",
-    "vitest": "^4.0.15",
-    "vue": "^3.5.25",
+    "vitest": "^4.1.10",
+    "vue": "^3.5.40",
     "vue-loader": "^17.4.2",
-    "webpack": "^5.103.0"
+    "webpack": "^5.109.0"
   },
   "peerDependencies": {
     "es-toolkit": "^1.11.0",
